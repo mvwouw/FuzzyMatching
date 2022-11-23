@@ -12,7 +12,7 @@ Basic usage with default settings:
     results_dict = lib1.top_from_col('testme')
 
 
-For reference on a 2020 laptop:
+For reference on a 2020 laptop (Python v3.11):
 Compares a 28 character string to more than 1.000.000 strings in about 600ms.
 Compares a 10 character string to about 200.000 strings in about 70ms.
 Compares a 6 character string to more than 60.000 strings in about 12ms.
@@ -125,33 +125,32 @@ class StringLib:
         except KeyError:
             print(f"\nError: Collection not found: {old_label}")
 
-    def col_info(self, label: str, full: bool = False) -> dict | None:
+    def col_info(self, label: str, full: bool = False) -> dict:
         """ Get information about a collection
         :param label: Name of the collection.
         :param full: When True returns the string list aswell.
-        :return: A dict containing information about the collection. Returns None if the library is empty.
+        :return: A dict containing information about the collection.
         """
         if type(label) is not str:
             raise TypeError(f"'label' argument is not a string: {label}")
         cols = self.collections()
         if len(cols) == 0:
-            return None
+            raise KeyError(f"Library is empty")
+        if label not in self.__strlib:
+            raise KeyError(f"Collection not found: {label}")
 
-        info = {'label': label}
-        try:
-            info['ignore_case'] = self.__strlib[label]['ignore_case']
-            info['to_ascii'] = self.__strlib[label]['to_ascii']
-            info['no_strip'] = self.__strlib[label]['no_strip']
-            info['num_strings'] = self.__strlib[label]['num_ref']
-            if full:
-                collection = []
-                for _, value in self.__strlib[label]['col_by_len'].items():
-                    for ref in value:
-                        collection.append(ref)
-                info['collection'] = collection
-            return info
-        except KeyError:
-            print(f"\nError: Collection not found: {label}")
+        info = {'label': label,
+                'ignore_case': self.__strlib[label]['ignore_case'],
+                'to_ascii': self.__strlib[label]['to_ascii'],
+                'no_strip': self.__strlib[label]['no_strip'],
+                'num_strings': self.__strlib[label]['num_ref']}
+        if full:
+            collection = []
+            for _, value in self.__strlib[label]['col_by_len'].items():
+                for ref in value:
+                    collection.append(ref)
+            info['collection'] = collection
+        return info
 
     def collections(self) -> list[str]:
         """ Get a list of collection names in this library
@@ -205,6 +204,8 @@ class StringLib:
             for collection in collections:
                 if type(collection) is not str:
                     raise TypeError(f"'collections' argument list contains a non-string object: {collection}")
+                if collection not in self.__strlib:
+                    raise KeyError(f"Collection not found: {collection}")
         else:
             collections = self.collections()
         if type(top) is not int:

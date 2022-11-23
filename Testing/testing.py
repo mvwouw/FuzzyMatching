@@ -43,7 +43,6 @@ if __name__ == '__main__':
     # geo.del_col('co_fr')
     # geo.ren_col('co_fr', 'landen-frans')
     # print(geo.col_info('cus', full=True))
-    print(lang.col_info('ci_uk'))
     # print(lang)
     # print(lang.collections())
     # geo.clr_lib()
@@ -53,14 +52,13 @@ if __name__ == '__main__':
 
 
     # set_opt method for changing a collections' options
-    # test top_ with an invalid col name
 
 
     # test = geo.top_from_col('  lAagdën ', top=15, look_around=5)
-    test = lang.top_from_col('londen', ['ci_uk'], top=5, look_around=3)  # 72/60 ms
+    # test = lang.top_from_col('londo', ['ci_uk', 'wo_nl'], top=5, look_around=5)  # 72/60 ms
     # test = lang.top_from_col('akwisietie', ['ci_uk', 'wo_nl'], top=5, look_around=3)  # 110/115 ms
     # test = lang.top_from_col('  Vërderwegdanallesanderszz ', top=5, look_around=-1)  # 600 ms
-    # test = lang.top_from_col('jastifikaition', ['wo_uk'], top=5, look_around=5)  # 400/155 ms
+    test = lang.top_from_col('jastifikaition', ['wo_uk'], top=5, look_around=5)  # 400/155 ms
 
     if test:
         print(f"\nTop {len(test['results'])} results found:")
