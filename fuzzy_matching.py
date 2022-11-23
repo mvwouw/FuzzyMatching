@@ -58,6 +58,8 @@ class StringLib:
             raise TypeError(f"'ignore_case' argument is not a boolean: {ignore_case}")
         if type(to_ascii) is not bool:
             raise TypeError(f"'to_ascii' argument is not a boolean: {to_ascii}")
+        if type(no_strip) is not bool:
+            raise TypeError(f"'no_strip' argument is not a boolean: {no_strip}")
         if type(collection) is not list:
             raise TypeError(f"'collection' argument is not a list")
         if len(collection) > 1:
@@ -124,6 +126,39 @@ class StringLib:
             self.__strlib['collections'].append(new_label)
         except KeyError:
             print(f"\nError: Collection not found: {old_label}")
+
+    def set_pre_opt(self, label: str, ignore_case: bool, to_ascii: bool, no_strip: bool):
+        """ Change the pre-processing options for an existing collection
+        :param label: Name of the collection to be changed.
+        :param ignore_case: New setting for ignoring character cases.
+        :param to_ascii: New setting for changing characters to an ascii equivalent.
+        :param no_strip: New setting for stripping preceeding and trailing whitespace
+        """
+        if type(label) is not str:
+            raise TypeError(f"'label' argument is not a string: {label}")
+        cols = self.collections()
+        if len(cols) == 0:
+            raise KeyError(f"Library is empty")
+        if label not in self.__strlib:
+            raise KeyError(f"Collection not found: {label}")
+        if type(ignore_case) is not bool:
+            raise TypeError(f"'ignore_case' argument is not a boolean: {ignore_case}")
+        if type(to_ascii) is not bool:
+            raise TypeError(f"'to_ascii' argument is not a boolean: {to_ascii}")
+        if type(no_strip) is not bool:
+            raise TypeError(f"'no_strip' argument is not a boolean: {no_strip}")
+
+        if self.__strlib[label]['ignore_case'] == ignore_case and self.__strlib[label]['to_ascii'] == to_ascii \
+                and self.__strlib[label]['no_strip'] == no_strip:
+            return
+
+        temp_col = []
+        for _, value in self.__strlib[label]['col_by_len'].items():
+            for ref in value:
+                temp_col.append(ref[2])
+
+        self.del_col(label)
+        self.add_col(temp_col, label, ignore_case=ignore_case, to_ascii=to_ascii, no_strip=no_strip)
 
     def col_info(self, label: str, full: bool = False) -> dict:
         """ Get information about a collection

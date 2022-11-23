@@ -43,15 +43,14 @@ if __name__ == '__main__':
     # geo.del_col('co_fr')
     # geo.ren_col('co_fr', 'landen-frans')
     # print(geo.col_info('cus', full=True))
+    # geo.set_pre_opt('cus', ignore_case=False, to_ascii=False, no_strip=False)
+    # print(geo.col_info('cus', full=True))
     # print(lang)
     # print(lang.collections())
     # geo.clr_lib()
     # for key, value in geo.lib_info().items():
     #     print(f"\t{key}: {value}")
     # print()
-
-
-    # set_opt method for changing a collections' options
 
 
     # test = geo.top_from_col('  lAagdën ', top=15, look_around=5)
