@@ -3,6 +3,7 @@ Easy and fast fuzzy (approximate) matching of single strings against large colle
 
 Create libraries with the Stringlib class and add collections of strings to them. Some common pre-processing options
 are available and are applied per collection. Also present are some basic library and collection management methods.
+Requires the Levenshtein package.
 
 Basic usage with default settings:
     lib1 = StringLib()
@@ -26,7 +27,7 @@ from time import perf_counter_ns
 
 class StringLib:
     """ String Library
-    Manage collections of strings and run matches against them.
+    Manage collections of strings and run fuzzy/approximate matches against them.
     """
     __slots__ = '__strlib'
 
@@ -47,11 +48,11 @@ class StringLib:
 
         :param collection: A list of strings to run matches against.
         :param label: The name of this collection.
-        :param ignore_case: Specify whether to ignore character cases when matching against this collection.
+        :param ignore_case: Specify whether to ignore character cases when matching to this collection. (default=True)
         :param to_ascii: Specify whether to try and convert any non-ASCII character to ASCII first before matching
-                         (ie: ë to e, etc.).
+                         (ie: ë to e, etc.). (default=True)
         :param no_strip: Specify whether to strip strings from preceeding and trailing whitespace characters when
-                         matching against this collection.
+                         matching against this collection. (default=False)
         """
         # LBYL checks
         if type(label) is not str:
@@ -165,7 +166,7 @@ class StringLib:
     def col_info(self, label: str, full: bool = False) -> dict:
         """ Get information about a collection
         :param label: Name of the collection.
-        :param full: When True returns the string list aswell.
+        :param full: When True returns the string list aswell. (default=False)
         :return: A dict containing information about the collection.
         """
         if type(label) is not str:
@@ -226,12 +227,12 @@ class StringLib:
                 ) -> dict | None:
         """ Get the top x best matches
         :param sample: A string to match against one or more collections from this library.
-        :param collections: A list of collection names to match against. If None uses all collections.
-        :param top: The amount of best matches to return
+        :param collections: A list of collection names to match against. If None uses all collections. (default=None)
+        :param top: The amount of best matches to return. Set to 0 for all(!) results. (default=1)
         :param look_around: Set a limit to how many characters longer or shorter a (collection-) string may be before
-               skipping it. Set to -1 for no limit.
-        :param lmin: Set a minimum character length for strings to compare your sample to.
-        :param lmax: Set a maximum character length for strings to compare your sample to. Set to 0 for no maximum.
+               skipping it. Set to -1 for no limit. (default=-1)
+        :param lmin: Set a minimum character length for strings to compare your sample to. (default=1)
+        :param lmax: Set a maximum character length for strings to compare your sample to. Set to 0 for no maximum. (default=0)
         :return: A dictionary with results and some stats about the search.
         """
         # LBYL checks
