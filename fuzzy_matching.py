@@ -28,6 +28,8 @@ class StringLib:
     """ String Library
     Manage collections of strings and run matches against them.
     """
+    __slots__ = '__strlib'
+
     def __init__(self):
         self.__strlib = {'collections': [], 'total_strings': 0}
 
@@ -218,7 +220,9 @@ class StringLib:
     def top_from_col(self, sample: str,
                      collections: list[str] = None,
                      top: int = 1,
-                     look_around: int = -1
+                     look_around: int = -1,
+                     lmin: int = 1,
+                     lmax: int = 0
                      ) -> dict | None:
         """ Get the top x best matches
         :param sample: A string to match against one or more collections from this library.
@@ -226,6 +230,8 @@ class StringLib:
         :param top: The amount of best matches to return
         :param look_around: Set a limit to how many characters longer or shorter a (collection-) string may be before
                skipping it. Set to -1 for no limit.
+        :param lmin: Set a minimum character length for strings to compare your sample to.
+        :param lmax: Set a maximum character length for strings to compare your sample to. Set to 0 for no maximum.
         :return: A dictionary with results and some stats about the search.
         """
         # LBYL checks
@@ -251,6 +257,14 @@ class StringLib:
             raise TypeError(f"'look_around' argument is not an integer: {look_around}")
         if look_around < -1:
             raise ValueError(f"'look_around' argument may not be smaller than -1: ({look_around} < -1)")
+        if type(lmin) is not int:
+            raise TypeError(f"'lmin' argument is not an integer: {lmin}")
+        if lmin < 1:
+            raise ValueError(f"'lmin' argument may not be smaller than 1: ({lmin} < 1)")
+        if type(lmax) is not int:
+            raise TypeError(f"'lmax' argument is not an integer: {lmax}")
+        if lmax < 0:
+            raise ValueError(f"'lmax' argument may not be smaller than 0: ({lmax} < 0)")
 
         results = {'sample': sample, 'skipped': 0, 'total': 0}
         st_t0 = perf_counter_ns()
@@ -271,7 +285,18 @@ class StringLib:
             # do matching per word length
             len_sample = len(sample)
             for length, ref_list in self.__strlib[collection]['col_by_len'].items():
-                # skip string set if character length is out of look_around range
+                # skip string set if its character length is smaller than lmin
+                if length < lmin:
+                    results['skipped'] += len(self.__strlib[collection]['col_by_len'][length])
+                    continue
+
+                # skip string set if its character length is bigger than lmax
+                if lmax != 0:
+                    if length > lmax:
+                        results['skipped'] += len(self.__strlib[collection]['col_by_len'][length])
+                        continue
+
+                # skip string set if its character length is out of look_around range
                 if look_around > -1:
                     if abs(length - len_sample) > look_around:
                         results['skipped'] += len(self.__strlib[collection]['col_by_len'][length])

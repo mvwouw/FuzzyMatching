@@ -1,6 +1,5 @@
 import fuzzy_matching as fm
 from time import perf_counter_ns
-from Levenshtein import ratio
 
 
 def read_file(path: str) -> list[str]:
@@ -38,7 +37,7 @@ if __name__ == '__main__':
     # t0 = perf_counter_ns()
     lang.add_col(read_file('.\\Testing\\words_eng.txt'), 'wo_uk', ignore_case=True, to_ascii=True, no_strip=False)  # 2080/1345/510/310 ms
     # print(f"Add 'wo_uk' collection to library took: {round((perf_counter_ns() - t0) / 1e6)} ms")
-    print(f"Add all collections to library took: {round((perf_counter_ns() - t1) / 1e6)} ms")  # 740
+    print(f"Add all collections to library took: {round((perf_counter_ns() - t1) / 1e6)} ms")  # 740/795 ms
 
     # geo.del_col('co_fr')
     # geo.ren_col('co_fr', 'landen-frans')
@@ -54,10 +53,10 @@ if __name__ == '__main__':
 
 
     # test = geo.top_from_col('  lAagdën ', top=15, look_around=5)
-    # test = lang.top_from_col('londo', ['ci_uk', 'wo_nl'], top=5, look_around=5)  # 72/60 ms
-    # test = lang.top_from_col('akwisietie', ['ci_uk', 'wo_nl'], top=5, look_around=3)  # 110/115 ms
-    # test = lang.top_from_col('  Vërderwegdanallesanderszz ', top=5, look_around=-1)  # 600 ms
-    test = lang.top_from_col('jastifikaition', ['wo_uk'], top=5, look_around=5)  # 400/155 ms
+    # test = lang.top_from_col('londo', ['ci_uk', 'wo_nl'], top=5, look_around=5, lmin=3)  # 72/60 ms
+    # test = lang.top_from_col('akwisietie', ['ci_uk', 'wo_nl'], top=5, look_around=3, lmin=3)  # 110/115 ms
+    # test = lang.top_from_col('  Vërderwegdanallesanderszz ', top=5, look_around=-1, lmin=3)  # 600 ms
+    test = lang.top_from_col('jastifikaition', ['wo_uk'], top=5, look_around=5, lmin=3, lmax=0)  # 400/155 ms
 
     if test:
         print(f"\nTop {len(test['results'])} results found:")
