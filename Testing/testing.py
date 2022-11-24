@@ -16,9 +16,9 @@ if __name__ == '__main__':
     custom = ['Timboektoe', ' \n', 'wehrwheg', 'Lutjebroek  ', 'Verweggistan', 'Neverland\n', 'Verwegië', ' irgendwo', '', ' ']
     geo.add_col(custom, 'cus', ignore_case=False, to_ascii=False, no_strip=True)
     ## 569 strings
-    geo.add_col(read_file('.\\Testing\\landen - NL.txt'), 'co_nl', ignore_case=True, to_ascii=True, no_strip=False)
-    geo.add_col(read_file('.\\Testing\\landen - FR.txt'), 'co_fr', ignore_case=True, to_ascii=True, no_strip=False)
-    geo.add_col(read_file('.\\Testing\\landen - DE.txt'), 'co_de', ignore_case=True, to_ascii=True, no_strip=False)
+    # geo.add_col(read_file('.\\Testing\\landen - NL.txt'), 'co_nl', ignore_case=True, to_ascii=True, no_strip=False)
+    # geo.add_col(read_file('.\\Testing\\landen - FR.txt'), 'co_fr', ignore_case=True, to_ascii=True, no_strip=False)
+    # geo.add_col(read_file('.\\Testing\\landen - DE.txt'), 'co_de', ignore_case=True, to_ascii=True, no_strip=False)
     ## 61.000 strings
     # t0 = perf_counter_ns()
 
@@ -52,14 +52,14 @@ if __name__ == '__main__':
     # print()
 
 
-    # test = geo.top_from_col('  lAagdën ', top=15, look_around=5)
-    # test = lang.top_from_col('londo', ['ci_uk', 'wo_nl'], top=5, look_around=5, lmin=3)  # 72/60 ms
-    # test = lang.top_from_col('akwisietie', ['ci_uk', 'wo_nl'], top=5, look_around=3, lmin=3)  # 110/115 ms
-    # test = lang.top_from_col('  Vërderwegdanallesanderszz ', top=5, look_around=-1, lmin=3)  # 600 ms
-    test = lang.top_from_col('jastifikaition', ['wo_uk'], top=5, look_around=5, lmin=3, lmax=0)  # 400/155 ms
+    # test = geo.get_top('  lAagdën ', top=0)
+    # test = lang.get_top('londo', ['ci_uk', 'wo_nl'], top=5, look_around=5, lmin=3)  # 72/60 ms
+    # test = lang.get_top('akwisietie', ['ci_uk', 'wo_nl'], top=5, look_around=3, lmin=3)  # 110/115 ms
+    # test = lang.get_top('  Vërderwegdanallesanderszz ', top=5, look_around=-1, lmin=3)  # 600 ms
+    test = lang.get_top('jastifikaition', ['wo_uk'], top=5, look_around=5, lmin=3, lmax=0)  # 400/155 ms
 
     if test:
-        print(f"\nTop {len(test['results'])} results found:")
+        print(f"\nTop {len(test['results'])} results:")
         for i, result in enumerate(test['results']):
             print(f"{i + 1}. {result[0][0]}    (from: '{result[0][1]}', as: '{result[0][2]}', ratio: '{result[1]}')")
         print((f"\n< Tested '{test['sample']}' against {test['tested']} references out of {test['total']}"

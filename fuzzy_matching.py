@@ -9,7 +9,7 @@ Basic usage with default settings:
     lib1.add_col(['Netherlands', 'Germany', 'France', 'Spain'], 'world countries')
     lib1.add_col(['London', 'Edinburgh', 'Manchester', 'Birmingham', 'Glasgow'], 'uk cities')
 
-    results_dict = lib1.top_from_col('testme')
+    results_dict = lib1.get_top('testme')
 
 
 For reference on a 2020 laptop (Python v3.11):
@@ -217,13 +217,13 @@ class StringLib:
         info['total_strings'] = tot_refs
         return info
 
-    def top_from_col(self, sample: str,
-                     collections: list[str] = None,
-                     top: int = 1,
-                     look_around: int = -1,
-                     lmin: int = 1,
-                     lmax: int = 0
-                     ) -> dict | None:
+    def get_top(self, sample: str,
+                collections: list[str] = None,
+                top: int = 1,
+                look_around: int = -1,
+                lmin: int = 1,
+                lmax: int = 0
+                ) -> dict | None:
         """ Get the top x best matches
         :param sample: A string to match against one or more collections from this library.
         :param collections: A list of collection names to match against. If None uses all collections.
@@ -251,8 +251,8 @@ class StringLib:
             collections = self.collections()
         if type(top) is not int:
             raise TypeError(f"'top' argument is not an integer: {top}")
-        if top < 1:
-            raise ValueError(f"'top' argument must be greater than 0: ({top} < 1)")
+        if top < 0:
+            raise ValueError(f"'top' argument must be 0 or greater: ({top} < 0)")
         if type(look_around) is not int:
             raise TypeError(f"'look_around' argument is not an integer: {look_around}")
         if look_around < -1:
@@ -306,15 +306,22 @@ class StringLib:
                 ratios = [ratio(sample, ref[2]) for ref in ref_list]
 
                 # skim intermediate results to save time sorting
-                for _ in range(min(top, len(ratios))):
-                    idx = ratios.index(max(ratios))
-                    result = (self.__strlib[collection]['col_by_len'][length][idx], ratios[idx]),
+                if top != 0:
+                    for _ in range(min(top, len(ratios))):
+                        idx = ratios.index(max(ratios))
+                        result = (self.__strlib[collection]['col_by_len'][length][idx], ratios[idx]),
+                        temp_results.extend(result)
+                        ratios[idx] -= 1
+                else:
+                    result = list(zip(self.__strlib[collection]['col_by_len'][length], ratios))
                     temp_results.extend(result)
-                    ratios[idx] -= 1
 
         # finalize results and stats
         temp_results.sort(key=lambda x: x[1], reverse=True)
-        results['results'] = temp_results[:top]
+        if top != 0:
+            results['results'] = temp_results[:top]
+        else:
+            results['results'] = temp_results
         results['collections'] = collections
         results['tested'] = results['total'] - results['skipped']
         results['time'] = round((perf_counter_ns() - st_t0) / 1e6)
