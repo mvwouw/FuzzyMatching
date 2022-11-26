@@ -1,22 +1,28 @@
 """ Fuzzy Matching
-Easy and fast fuzzy (approximate) matching of single strings against large collections of strings.
+Easy and fast fuzzy/approximate matching of single strings against large collections of strings.
 
-Create libraries with the Stringlib class and add collections of strings to them. Some common pre-processing options
-are available and are applied per collection. Also present are some basic library and collection management methods.
+Create and manage libraries with the Stringlib class and add collections of strings to them. Some common pre-processing
+options can be applied per collection. Run queries against combinations of collections and get returned the
+top n matches with their respective: collection, pre- and post-processing string, relational string (if provided)
+and ratio of the match.
+
 Requires the Levenshtein package.
 
 Basic usage with default settings:
-    lib1 = StringLib()
+    import fuzzy_matching as fm
+
+    lib1 = fm.StringLib()
     lib1.add_col(['Netherlands', 'Germany', 'France', 'Spain'], 'world countries')
-    lib1.add_col(['London', 'Edinburgh', 'Manchester', 'Birmingham', 'Glasgow'], 'uk cities')
+    ukdict = {'London': 'london.uk/page.html', 'Edinburgh': 'pop 500.000', 'Manchester': 'plays football', 'Birmingham': '', 'Glasgow': 'D:\Glasgow\'}
+    lib1.add_col(ukdict, 'uk cities with meta')
 
     results_dict = lib1.get_top('testme')
 
 
 For reference on a 2020 laptop (Python v3.11):
-Compares a 28 character string to more than 1.000.000 strings in about 600ms.
-Compares a 10 character string to about 200.000 strings in about 70ms.
-Compares a 6 character string to more than 60.000 strings in about 12ms.
+Compares a 28 character string to 1.000.000+ strings in about 600ms.
+Compares a 10 character string to ~200.000 strings in about 70ms.
+Compares a 6 character string to 60.000+ strings in about 10ms.
 """
 
 
@@ -27,7 +33,7 @@ from time import perf_counter_ns
 
 class StringLib:
     """ String Library
-    Manage collections of strings and run fuzzy/approximate matches against them.
+    Manage collections of strings and run fuzzy/approximate queries against them.
     """
     __slots__ = '__strlib'
 
@@ -40,19 +46,22 @@ class StringLib:
             total_refs += self.__strlib[collection]['num_ref']
         return f"String Library holding {total_refs} references in {len(self.collections())} collections"
 
-    def add_col(self, collection: list[str], label: str,
+    def add_col(self, collection: list[str] | dict, label: str,
                 ignore_case: bool = True,
                 to_ascii: bool = True,
                 no_strip: bool = False):
         """ Add a collection to this library
 
-        :param collection: A list of strings to run matches against.
+        Argumenting a list as collection will make matches return an empty string as relation. Argumenting a dict as
+        collection will run matches against the keys and use the values as relations.
+
+        :param collection: A list or dictionary of strings to run matches against.
         :param label: The name of this collection.
-        :param ignore_case: Specify whether to ignore character cases when matching to this collection. (default=True)
-        :param to_ascii: Specify whether to try and convert any non-ASCII character to ASCII first before matching
+        :param ignore_case: Specify whether to ignore character cases when querying this collection. (default=True)
+        :param to_ascii: Specify whether to try and convert any non-ASCII character to ASCII first before querying
                          (ie: ë to e, etc.). (default=True)
         :param no_strip: Specify whether to strip strings from preceeding and trailing whitespace characters when
-                         matching against this collection. (default=False)
+                         querying this collection. (default=False)
         """
         # LBYL checks
         if type(label) is not str:
@@ -63,14 +72,17 @@ class StringLib:
             raise TypeError(f"'to_ascii' argument is not a boolean: {to_ascii}")
         if type(no_strip) is not bool:
             raise TypeError(f"'no_strip' argument is not a boolean: {no_strip}")
-        if type(collection) is not list:
-            raise TypeError(f"'collection' argument is not a list")
+        if type(collection) is not list and type(collection) is not dict:
+            raise TypeError(f"'collection' argument is not a list or dictionary")
+        islist = False
         if len(collection) > 1:
-            for item in collection:
-                if not isinstance(item, str):
-                    raise TypeError(f"'collection' list contains a non-string item: {item}")
+            if type(collection) is list:
+                islist = True
+                for item in collection:
+                    if not isinstance(item, str):
+                        raise TypeError(f"'collection' list contains a non-string item: {item}")
         else:
-            raise Exception(f"'collection' list contains less than 2 strings.")
+            raise Exception(f"'collection' list or dictionary contains less than 2 items.")
 
         self.__strlib['collections'].append(label)
         self.__strlib[label] = {}
@@ -78,36 +90,45 @@ class StringLib:
         self.__strlib[label]['to_ascii'] = to_ascii
         self.__strlib[label]['no_strip'] = no_strip
 
+        # seperate the collection from its relations
+        if islist:
+            pre_col = collection.copy()
+        else:
+            pre_col, relations = list(collection.keys()), list(collection.values())
+
         # Pre-processing
         if not no_strip:
-            collection = [item.strip() for item in collection]
-        while "" in collection:
-            collection.remove("")
-        while "\n" in collection:
-            collection.remove("\n")
+            pre_col = [item.strip() for item in pre_col]
+        while "" in pre_col:
+            pre_col.remove("")
+        while "\n" in pre_col:
+            pre_col.remove("\n")
         if to_ascii:
             if ignore_case:
-                reference = [normalize("NFKD", item).encode("ascii", "ignore").decode().lower() for item in collection]
+                reference = [normalize("NFKD", item).encode("ascii", "ignore").decode().lower() for item in pre_col]
             else:
-                reference = [normalize("NFKD", item).encode("ascii", "ignore").decode() for item in collection]
+                reference = [normalize("NFKD", item).encode("ascii", "ignore").decode() for item in pre_col]
         else:
             if ignore_case:
-                reference = [item.lower() for item in collection]
+                reference = [item.lower() for item in pre_col]
             else:
-                reference = collection.copy()
+                reference = pre_col.copy()
+
         len_col = len(reference)
         self.__strlib[label]['num_ref'] = len_col
 
         # Create dict with strings grouped by length
         label_list = [label] * len_col
-        col_ref = zip(collection, label_list, reference)
+        if islist:
+            relations = [''] * len_col
+        col_ref = zip(pre_col, label_list, reference, relations)
         self.__strlib[label]['col_by_len'] = {}
         for tup in col_ref:
             self.__strlib[label]['col_by_len'].setdefault(len(tup[2]), []).append(tup)
 
     def del_col(self, label: str):
         """ Delete a collection from this library
-        :param label: Name of the collection to be deleted.
+        :param label: Name of the collection to delete.
         """
         if type(label) is not str:
             raise TypeError(f"'label' argument is not a string: {label}")
@@ -166,7 +187,7 @@ class StringLib:
     def col_info(self, label: str, full: bool = False) -> dict:
         """ Get information about a collection
         :param label: Name of the collection.
-        :param full: When True returns the string list aswell. (default=False)
+        :param full: When True return includes the string list. (default=False)
         :return: A dict containing information about the collection.
         """
         if type(label) is not str:
@@ -218,7 +239,7 @@ class StringLib:
         info['total_strings'] = tot_refs
         return info
 
-    def get_top(self, sample: str,
+    def get_top(self, query: str,
                 collections: list[str] = None,
                 top: int = 1,
                 look_around: int = -1,
@@ -226,20 +247,20 @@ class StringLib:
                 lmax: int = 0
                 ) -> dict | None:
         """ Get the top x best matches
-        :param sample: A string to match against one or more collections from this library.
+        :param query: A string to match against one or more collections from this library.
         :param collections: A list of collection names to match against. If None uses all collections. (default=None)
         :param top: The amount of best matches to return. Set to 0 for all(!) results. (default=1)
         :param look_around: Set a limit to how many characters longer or shorter a (collection-) string may be before
                skipping it. Set to -1 for no limit. (default=-1)
-        :param lmin: Set a minimum character length for strings to compare your sample to. (default=1)
-        :param lmax: Set a maximum character length for strings to compare your sample to. Set to 0 for no maximum. (default=0)
+        :param lmin: Set a minimum character length for strings to compare your query to. (default=1)
+        :param lmax: Set a maximum character length for strings to compare your query to. Set to 0 for no maximum. (default=0)
         :return: A dictionary with results and some stats about the search.
         """
         # LBYL checks
-        if sample.strip() == "" or sample is None:
+        if query.strip() == "" or query is None:
             return None
-        if type(sample) is not str:
-            raise TypeError(f"'sample' argument is not a string: {sample}")
+        if type(query) is not str:
+            raise TypeError(f"'query' argument is not a string: {query}")
         if collections:
             if type(collections) is not list:
                 raise TypeError(f"'collections' argument is not a list: {collections}")
@@ -267,24 +288,24 @@ class StringLib:
         if lmax < 0:
             raise ValueError(f"'lmax' argument may not be smaller than 0: ({lmax} < 0)")
 
-        results = {'sample': sample, 'skipped': 0, 'total': 0}
+        results = {'query': query, 'skipped': 0, 'total': 0}
         st_t0 = perf_counter_ns()
 
         # do matching for each argumented collection
         temp_results = []
         for collection in collections:
-            # apply collection pre-processing settings to sample
+            # apply collection pre-processing settings to query
             if self.__strlib[collection]['ignore_case']:
-                sample = sample.lower()
+                query = query.lower()
             if self.__strlib[collection]['to_ascii']:
-                sample = normalize("NFKD", sample).encode("ascii", "ignore").decode()
+                query = normalize("NFKD", query).encode("ascii", "ignore").decode()
             if not self.__strlib[collection]['no_strip']:
-                sample = sample.strip()
+                query = query.strip()
 
             results['total'] += self.__strlib[collection]['num_ref']
 
             # do matching per word length
-            len_sample = len(sample)
+            len_query = len(query)
             for length, ref_list in self.__strlib[collection]['col_by_len'].items():
                 # skip string set if its character length is smaller than lmin
                 if length < lmin:
@@ -299,12 +320,12 @@ class StringLib:
 
                 # skip string set if its character length is out of look_around range
                 if look_around > -1:
-                    if abs(length - len_sample) > look_around:
+                    if abs(length - len_query) > look_around:
                         results['skipped'] += len(self.__strlib[collection]['col_by_len'][length])
                         continue
 
-                # get a list ratios for this string set
-                ratios = [ratio(sample, ref[2]) for ref in ref_list]
+                # get a list of ratios for this string set
+                ratios = [ratio(query, ref[2]) for ref in ref_list]
 
                 # skim intermediate results to save time sorting
                 if top != 0:
