@@ -69,15 +69,15 @@ if __name__ == '__main__':
 
 
     # test = geo.get_top('  lAagdën ', top=0)
-    # test = lang.get_top('londo', ['ci_uk', 'wo_nl'], top=5, look_around=5, lmin=3)  # 72/60 ms
-    # test = lang.get_top('akwisietie', ['ci_uk', 'wo_nl'], top=5, look_around=3, lmin=3)  # 110/115 ms
-    test = lang.get_top('  Vërderwegdanallesanderszz ', top=5, look_around=-1, lmin=3)  # 600 ms
-    # test = lang.get_top('jastifikaition', ['wo_uk'], top=5, look_around=5, lmin=3, lmax=0)  # 400/155 ms
+    # test = lang.get_top('Londen', ['ci_uk'], top=5, look_around=5, lmin=3)  # 72/60/50 ms
+    # test = lang.get_top('akwisietie', ['ci_uk', 'wo_nl'], top=5, look_around=3, lmin=3)  # 110/115/80 ms
+    test = lang.get_top('  Vërderwegdanallesanderszz ', top=5, look_around=-1, lmin=3)  # 600/515 ms
+    # test = lang.get_top('jastifikaition', ['wo_uk'], top=5, look_around=5, lmin=3, lmax=0)  # 400/155/135 ms
 
     if test:
         print(f"\nTop {len(test['results'])} results:")
         for i, result in enumerate(test['results']):
-            print(f"{i + 1}. {result[0][0]}    (from: '{result[0][1]}', as: '{result[0][2]}', ratio: '{result[1]}', relation: '{result[0][3]}')")
+            print(f"{i + 1}. {result[0][0]}    (from: '{result[0][1]}', as: '{result[0][2]}', ratio: '{round(result[1], 2)}', relation: '{result[0][3]}')")
         print((f"\n< Tested '{test['query']}' against {test['tested']} references out of {test['total']}"
                f" total in collections {test['collections']} (skipped {test['skipped']}) in {test['time']} ms >"))
 

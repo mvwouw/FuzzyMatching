@@ -6,7 +6,7 @@ options can be applied per collection. Run queries against combinations of colle
 top n matches with their respective: collection, pre- and post-processing string, relational string (if provided)
 and ratio of the match.
 
-Requires the Levenshtein package.
+Requires the RapidFuzz package.
 
 Basic usage with default settings:
     import fuzzy_matching as fm
@@ -20,15 +20,16 @@ Basic usage with default settings:
 
 
 For reference on a 2020 laptop (Python v3.11):
-Compares a 28 character string to 1.000.000+ strings in about 600ms.
-Compares a 10 character string to ~200.000 strings in about 70ms.
-Compares a 6 character string to 60.000+ strings in about 10ms.
+Compares a 28 character string to 1.000.000+ strings in about 515ms.
+Compares a 10 character string to ~200.000 strings in about 60ms.
+Compares a 6 character string to 60.000+ strings in about 15ms.
 """
 
 
 from unicodedata import normalize
 from Levenshtein import ratio
 from time import perf_counter_ns
+from rapidfuzz import fuzz
 
 
 class StringLib:
@@ -325,7 +326,7 @@ class StringLib:
                         continue
 
                 # get a list of ratios for this string set
-                ratios = [ratio(query, ref[2]) for ref in ref_list]
+                ratios = [fuzz.ratio(query, ref[2]) for ref in ref_list]
 
                 # skim intermediate results to save time sorting
                 if top != 0:
@@ -333,7 +334,7 @@ class StringLib:
                         idx = ratios.index(max(ratios))
                         result = (self.__strlib[collection]['col_by_len'][length][idx], ratios[idx]),
                         temp_results.extend(result)
-                        ratios[idx] -= 1
+                        ratios[idx] -= 100
                 else:
                     result = list(zip(self.__strlib[collection]['col_by_len'][length], ratios))
                     temp_results.extend(result)
