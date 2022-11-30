@@ -53,10 +53,10 @@ class StringLib:
         """ Add a collection to this library
 
         Argumenting a list as collection will make matches return an empty string as relation. Argumenting a dict as
-        collection will run matches against the keys and use the values as relations.
+        collection will run matches against the keys and also return the associated values.
 
         :param collection: A list or dictionary of strings to run matches against. Using a dict here will expect the key
-               to be the reference string. The value vcan be of any type and will be returned along with the reference
+               to be the reference string. The value can be of any type and will be returned along with the reference
                in case of a match.
         :param label: The name of this collection.
         :param ignore_case: Specify whether to ignore character cases when querying this collection. (default=True)
@@ -92,19 +92,32 @@ class StringLib:
         self.__strlib[label]['to_ascii'] = to_ascii
         self.__strlib[label]['no_strip'] = no_strip
 
-        # seperate the collection from its relations
+        # Create and store base collection and values
         if islist:
             pre_col = collection.copy()
         else:
-            pre_col, relations = list(collection.keys()), list(collection.values())
+            pre_col = list(collection.keys())
+        self.__strlib[label]['collection'] = pre_col
+
+        len_col = len(pre_col)
+        self.__strlib[label]['num_ref'] = len_col
+
+        if islist:
+            values = [''] * len_col
+        else:
+            values = list(collection.values())
+        self.__strlib[label]['values'] = values
+
+        # creates potential misalignments
+        # while "" in pre_col:
+        #     pre_col.remove("")
+        # while "\n" in pre_col:
+        #     pre_col.remove("\n")
 
         # Pre-processing
         if not no_strip:
             pre_col = [item.strip() for item in pre_col]
-        while "" in pre_col:
-            pre_col.remove("")
-        while "\n" in pre_col:
-            pre_col.remove("\n")
+
         if to_ascii:
             if ignore_case:
                 references = [normalize("NFKD", item).encode("ascii", "ignore").decode().lower() for item in pre_col]
@@ -116,20 +129,15 @@ class StringLib:
             else:
                 references = pre_col.copy()
 
-        len_col = len(references)
-        self.__strlib[label]['num_ref'] = len_col
-
         # Create dicts with everything grouped by length
-        if islist:
-            relations = [''] * len_col
         self.__strlib[label]['col_by_len'] = {}
         self.__strlib[label]['ref_by_len'] = {}
-        self.__strlib[label]['rel_by_len'] = {}
+        self.__strlib[label]['val_by_len'] = {}
         for i, ref in enumerate(references):
             length = len(ref)
             self.__strlib[label]['col_by_len'].setdefault(length, []).append(pre_col[i])
             self.__strlib[label]['ref_by_len'].setdefault(length, []).append(ref)
-            self.__strlib[label]['rel_by_len'].setdefault(length, []).append(relations[i])
+            self.__strlib[label]['val_by_len'].setdefault(length, []).append(values[i])
 
     def del_col(self, label: str):
         """ Delete a collection from this library
@@ -157,38 +165,38 @@ class StringLib:
             print(f"\nError: Collection not found: {old_label}")
 
     # broke with allowing list or dict as input
-    # def set_pre_opt(self, label: str, ignore_case: bool, to_ascii: bool, no_strip: bool):
-    #     """ Change the pre-processing options for an existing collection
-    #     :param label: Name of the collection to be changed.
-    #     :param ignore_case: New setting for ignoring character cases.
-    #     :param to_ascii: New setting for changing characters to an ascii equivalent.
-    #     :param no_strip: New setting for stripping preceeding and trailing whitespace
-    #     """
-    #     if type(label) is not str:
-    #         raise TypeError(f"'label' argument is not a string: {label}")
-    #     cols = self.collections()
-    #     if len(cols) == 0:
-    #         raise KeyError(f"Library is empty")
-    #     if label not in self.__strlib:
-    #         raise KeyError(f"Collection not found: {label}")
-    #     if type(ignore_case) is not bool:
-    #         raise TypeError(f"'ignore_case' argument is not a boolean: {ignore_case}")
-    #     if type(to_ascii) is not bool:
-    #         raise TypeError(f"'to_ascii' argument is not a boolean: {to_ascii}")
-    #     if type(no_strip) is not bool:
-    #         raise TypeError(f"'no_strip' argument is not a boolean: {no_strip}")
-    #
-    #     if self.__strlib[label]['ignore_case'] == ignore_case and self.__strlib[label]['to_ascii'] == to_ascii \
-    #             and self.__strlib[label]['no_strip'] == no_strip:
-    #         return
-    #
-    #     temp_col = []
-    #     for _, value in self.__strlib[label]['col_by_len'].items():
-    #         for ref in value:
-    #             temp_col.append(ref[2])
-    #
-    #     self.del_col(label)
-    #     self.add_col(temp_col, label, ignore_case=ignore_case, to_ascii=to_ascii, no_strip=no_strip)
+    def set_pre_opt(self, label: str, ignore_case: bool = None, to_ascii: bool = None, no_strip: bool = None):
+        """ Change the pre-processing settings for an existing collection
+        :param label: Name of the collection to be changed.
+        :param ignore_case: New setting for ignoring character cases.
+        :param to_ascii: New setting for changing characters to an ascii equivalent.
+        :param no_strip: New setting for stripping preceeding and trailing whitespace
+        """
+        if type(label) is not str:
+            raise TypeError(f"'label' argument is not a string: {label}")
+        cols = self.collections()
+        if len(cols) == 0:
+            raise KeyError(f"Library is empty")
+        if label not in self.__strlib:
+            raise KeyError(f"Collection not found: {label}")
+        if type(ignore_case) is not bool:
+            raise TypeError(f"'ignore_case' argument is not a boolean: {ignore_case}")
+        if type(to_ascii) is not bool:
+            raise TypeError(f"'to_ascii' argument is not a boolean: {to_ascii}")
+        if type(no_strip) is not bool:
+            raise TypeError(f"'no_strip' argument is not a boolean: {no_strip}")
+
+        if self.__strlib[label]['ignore_case'] == ignore_case and self.__strlib[label]['to_ascii'] == to_ascii \
+                and self.__strlib[label]['no_strip'] == no_strip:
+            return
+
+        temp_col = []
+        for _, value in self.__strlib[label]['col_by_len'].items():
+            for ref in value:
+                temp_col.append(ref[2])
+
+        self.del_col(label)
+        self.add_col(temp_col, label, ignore_case=ignore_case, to_ascii=to_ascii, no_strip=no_strip)
 
     def col_info(self, label: str, full: bool = False) -> dict:
         """ Get information about a collection
@@ -213,7 +221,7 @@ class StringLib:
             collection = []
             for length, value in self.__strlib[label]['col_by_len'].items():
                 for i, pre_col in enumerate(value):
-                    collection.append((pre_col, self.__strlib[label]['ref_by_len'][length][i], self.__strlib[label]['rel_by_len'][length][i]),)
+                    collection.append((pre_col, self.__strlib[label]['ref_by_len'][length][i], self.__strlib[label]['val_by_len'][length][i]),)
             info['collection'] = collection
         return info
 
@@ -337,7 +345,7 @@ class StringLib:
 
                 for ratio in ratios:
                     result = (self.__strlib[collection]['col_by_len'][length][ratio[2]], collection, ratio[0],
-                              self.__strlib[collection]['rel_by_len'][length][ratio[2]], ratio[1]),
+                              self.__strlib[collection]['val_by_len'][length][ratio[2]], ratio[1]),
                     temp_results.extend(result)
 
         # finalize results and stats

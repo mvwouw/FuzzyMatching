@@ -25,15 +25,15 @@ def read_file_todict(path: str) -> dict:
 
 if __name__ == '__main__':
     t1 = perf_counter_ns()
-    geo = fm.StringLib()
+    # geo = fm.StringLib()
 
     ## 10 strings
-    custom = ['Timboektoe', ' \n', 'wehrwheg', 'Lutjebroek  ', 'Verweggistan', 'Neverland\n', 'Verwegië', ' irgendwo', '', ' ']
-    geo.add_col(custom, 'cus', ignore_case=False, to_ascii=False, no_strip=True)
+    # custom = ['Timboektoe', ' \n', 'wehrwheg', 'Lutjebroek  ', 'Verweggistan', 'Neverland\n', 'Verwegië', ' irgendwo', '', ' ']
+    # geo.add_col(custom, 'cus', ignore_case=False, to_ascii=False, no_strip=True)
     ## 569 strings
-    geo.add_col(read_file('.\\Testing\\landen - NL.txt'), 'co_nl', ignore_case=True, to_ascii=True, no_strip=False)
-    geo.add_col(read_file('.\\Testing\\landen - FR.txt'), 'co_fr', ignore_case=True, to_ascii=True, no_strip=False)
-    geo.add_col(read_file('.\\Testing\\landen - DE.txt'), 'co_de', ignore_case=True, to_ascii=True, no_strip=False)
+    # geo.add_col(read_file('.\\Testing\\landen - NL.txt'), 'co_nl', ignore_case=True, to_ascii=True, no_strip=False)
+    # geo.add_col(read_file('.\\Testing\\landen - FR.txt'), 'co_fr', ignore_case=True, to_ascii=True, no_strip=False)
+    # geo.add_col(read_file('.\\Testing\\landen - DE.txt'), 'co_de', ignore_case=True, to_ascii=True, no_strip=False)
     ## 61.000 strings
     # t0 = perf_counter_ns()
 
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     # t0 = perf_counter_ns()
     lang.add_col(read_file('.\\Testing\\words_eng.txt'), 'wo_uk', ignore_case=True, to_ascii=True, no_strip=False)  # 2080/1345/510/310 ms
     # print(f"Add 'wo_uk' collection to library took: {round((perf_counter_ns() - t0) / 1e6)} ms")
-    print(f"Add all collections to library took: {round((perf_counter_ns() - t1) / 1e6)} ms")  # 740/795/1100 ms
+    print(f"Add all collections to library took: {round((perf_counter_ns() - t1) / 1e6)} ms")  # 740/795/1075 ms
 
     # geo.del_col('co_fr')
     # geo.ren_col('co_fr', 'landen-frans')
