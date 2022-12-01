@@ -3,7 +3,7 @@ Easy and fast fuzzy/approximate matching of single strings against large collect
 
 Create and manage libraries with the Stringlib class and add collections of strings to them. Some common pre-processing
 options can be applied per collection. Run queries against combinations of collections and get returned the
-top n matches with their respective: collection, pre- and post-processing string, relational string (if provided)
+top n matches with their respective: collection-name, pre- and post-processing string, related value (if provided)
 and ratio of the match.
 
 Requires the RapidFuzz package.
@@ -20,8 +20,8 @@ Basic usage with default settings:
 
 
 For reference on a 2020 laptop (Python v3.11):
-Compares a 28 character string to 1.000.000+ strings in about 515ms.
-Compares a 10 character string to ~200.000 strings in about 60ms.
+Compares a 28 character string to 1.000.000+ strings in about 340ms.
+Compares a 10 character string to ~200.000 strings in about 45ms.
 Compares a 6 character string to 60.000+ strings in about 15ms.
 """
 
