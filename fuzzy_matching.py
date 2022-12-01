@@ -164,7 +164,6 @@ class StringLib:
         except KeyError:
             print(f"\nError: Collection not found: {old_label}")
 
-    # broke with allowing list or dict as input
     def set_pre_opt(self, label: str, ignore_case: bool = None, to_ascii: bool = None, no_strip: bool = None):
         """ Change the pre-processing settings for an existing collection
         :param label: Name of the collection to be changed.
@@ -172,6 +171,9 @@ class StringLib:
         :param to_ascii: New setting for changing characters to an ascii equivalent.
         :param no_strip: New setting for stripping preceeding and trailing whitespace
         """
+        if ignore_case is None and to_ascii is None and no_strip is None:
+            return
+
         if type(label) is not str:
             raise TypeError(f"'label' argument is not a string: {label}")
         cols = self.collections()
@@ -179,21 +181,27 @@ class StringLib:
             raise KeyError(f"Library is empty")
         if label not in self.__strlib:
             raise KeyError(f"Collection not found: {label}")
-        if type(ignore_case) is not bool:
-            raise TypeError(f"'ignore_case' argument is not a boolean: {ignore_case}")
-        if type(to_ascii) is not bool:
-            raise TypeError(f"'to_ascii' argument is not a boolean: {to_ascii}")
-        if type(no_strip) is not bool:
-            raise TypeError(f"'no_strip' argument is not a boolean: {no_strip}")
+        if ignore_case is None:
+            ignore_case = self.__strlib[label]['ignore_case']
+        else:
+            if type(ignore_case) is not bool:
+                raise TypeError(f"'ignore_case' argument is not a boolean: {ignore_case}")
+        if to_ascii is None:
+            to_ascii = self.__strlib[label]['to_ascii']
+        else:
+            if type(to_ascii) is not bool:
+                raise TypeError(f"'to_ascii' argument is not a boolean: {to_ascii}")
+        if no_strip is None:
+            no_strip = self.__strlib[label]['no_strip']
+        else:
+            if type(no_strip) is not bool:
+                raise TypeError(f"'no_strip' argument is not a boolean: {no_strip}")
 
         if self.__strlib[label]['ignore_case'] == ignore_case and self.__strlib[label]['to_ascii'] == to_ascii \
                 and self.__strlib[label]['no_strip'] == no_strip:
             return
 
-        temp_col = []
-        for _, value in self.__strlib[label]['col_by_len'].items():
-            for ref in value:
-                temp_col.append(ref[2])
+        temp_col = dict(zip(self.__strlib[label]['collection'], self.__strlib[label]['values']))
 
         self.del_col(label)
         self.add_col(temp_col, label, ignore_case=ignore_case, to_ascii=to_ascii, no_strip=no_strip)
